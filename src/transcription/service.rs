@@ -207,6 +207,13 @@ impl Drop for TranscriptionJob {
 }
 
 impl AudioClip {
+    /// The clip's 16 kHz mono samples, for a transcriber run outside the
+    /// service (`hex transcribe` with no Hex running).
+    #[cfg(not(target_os = "macos"))]
+    pub fn into_samples(self) -> Vec<f32> {
+        self.samples
+    }
+
     pub fn decode_wav<R: Read + Seek>(reader: R) -> std::result::Result<Self, AudioError> {
         let mut reader = WavReader::new(reader).map_err(|_| AudioError::Invalid)?;
         let spec = reader.spec();

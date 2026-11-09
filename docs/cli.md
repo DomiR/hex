@@ -37,6 +37,7 @@ hex
 │   ├── stop --print               print the transcript instead of pasting it (below)
 │   └── start|toggle --raw         paste the transcript as heard, skipping the Output steps
 ├── paste-last                     paste the last dictation (Option-Shift-V); refused while recording
+├── transcribe <file.wav> [--model M] [--language L]  print a WAV file's transcript (below)
 ├── typed-text                     Labs › Transform typed text (Linux): replace the focused field's text
 ├── meetings
 │   ├── record [--title T]         as the menu bar's Record Meeting; needs meetings.enabled
@@ -56,7 +57,8 @@ hex
 │   ├── rename <id> <name>         Labs: an import's picker name
 │   ├── repair <id>                Labs: rehash Hex's copy; ready again if it still matches
 │   ├── remove <id>                Labs: Hex's copy of an import (not the selected model)
-│   └── status|devices|check|transcribe <wav>  Linux and Windows, run in this process
+│   ├── transcribe <wav>           the same as `hex transcribe`
+│   └── status|devices|check       Linux and Windows, run in this process
 ├── commands
 │   ├── init                       create ~/.config/hex (local, no running Hex needed)
 │   └── check                      validate ~/.config/hex/hex.config.ts transformations
@@ -179,9 +181,21 @@ quit from its window or tray.
 does; on Linux and Windows with no Hex running it downloads here and then
 selects the model, printing progress (the source-install step `hex model
 install`). A Hex that starts while the download runs makes the switch instead.
-`model status`, `devices`, `check`, and `transcribe` are local tools on Linux
-and Windows and take the selected model unless one is named; macOS answers
+`model status`, `devices`, and `check` are local tools on Linux and Windows
+and take the selected model unless one is named; macOS answers
 `unsupported`.
+
+`transcribe <file>` (also `model transcribe`) prints the transcript of a WAV
+file: PCM (8 to 32 bit) or 32-bit float, 8 to 192 kHz, up to 8 channels, at
+most 64 MiB. Anything else (MP3, M4A, …) is refused with `unsupported-audio`
+before Hex is asked; convert it first (`ffmpeg -i in.m4a -ar 16000 -ac 1
+out.wav`). It takes the selected model and its language unless `--model` or
+`--language` names others, and the model must be installed. With Hex running
+the file goes to its `POST /transcriptions`, on the model Hex already holds
+(it waits out a dictation); on Linux and Windows with no Hex running the
+model loads in this process, and macOS answers `not-running`. The text is
+the model's output with no Output steps, and nothing is pasted or kept in
+History. No speech exits 4; `--json` prints a `transcript` reply.
 
 `start` and `restart` keep the `HEX_*` environment (`HEX_RETAIN_DICTATION_AUDIO`,
 `HEX_ENABLE_LLM`, and so on): macOS opens apps without the caller's

@@ -127,6 +127,37 @@ pub(super) fn post_json(
     read_timeout: Duration,
     max_response: usize,
 ) -> Result<(u16, Vec<u8>)> {
+    post(path, "application/json", body, read_timeout, max_response)
+}
+
+/// Sends a WAV file to the running app's `POST /transcriptions` and returns
+/// its status and body, so `hex transcribe` uses the model Hex holds.
+pub fn post_transcription(
+    model: &str,
+    language: &str,
+    wav: &[u8],
+    read_timeout: Duration,
+) -> Result<(u16, Vec<u8>)> {
+    let query = url::form_urlencoded::Serializer::new(String::new())
+        .append_pair("model", model)
+        .append_pair("language", language)
+        .finish();
+    post(
+        &format!("/transcriptions?{query}"),
+        "audio/wav",
+        wav,
+        read_timeout,
+        16 * 1024 * 1024,
+    )
+}
+
+fn post(
+    path: &str,
+    content_type: &str,
+    body: &[u8],
+    read_timeout: Duration,
+    max_response: usize,
+) -> Result<(u16, Vec<u8>)> {
     let document = live_discovery()?;
     let address = SocketAddr::from(([127, 0, 0, 1], document.port));
     let mut stream = TcpStream::connect_timeout(&address, CONNECTION_TIMEOUT)
@@ -135,7 +166,7 @@ pub(super) fn post_json(
     stream.set_write_timeout(Some(CONNECTION_TIMEOUT))?;
     write!(
         stream,
-        "POST {path} HTTP/1.1\r\nHost: 127.0.0.1\r\nAuthorization: Bearer {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+        "POST {path} HTTP/1.1\r\nHost: 127.0.0.1\r\nAuthorization: Bearer {}\r\nContent-Type: {content_type}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
         document.token,
         body.len(),
     )?;

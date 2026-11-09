@@ -63,7 +63,16 @@ Agent or terminal                                  // control.cli; every OS
 │   │   (--language overrides)
 │   └── Linux/Windows: install with Hex stopped downloads and selects here
 │       (a Hex that starts meanwhile makes the switch); status, devices,
-│       check, transcribe run here (macOS: unsupported)
+│       check run here (macOS: unsupported)
+├── hex transcribe <file> [--model M] [--language L] (also model transcribe)
+│   ├── not a RIFF/WAVE file, or a WAV format the service can't decode
+│   │   -> unsupported-audio / invalid-audio before Hex is asked
+│   ├── Hex running -> POST /transcriptions on the model Hex holds; prints
+│   │   the trimmed text (Transcript reply); no speech -> no-speech, exit 4
+│   └── Hex stopped -> Linux/Windows load the model here; macOS not-running
+│       Source: src/control/cli/transcribe.rs. Check: its unit tests.
+│       Observed 2026-11-09 on macOS against a running Hex (text, --json,
+│       non-WAV refusal); the Linux/Windows in-process path is unobserved.
 ├── hex window show [pane] | hide
 │   ├── settings -> the General pane (status window.pane stays "settings")
 │   ├── meetings pane with Meetings off -> the pane's opt-in card

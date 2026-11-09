@@ -23,7 +23,7 @@ mod streams;
 #[cfg_attr(not(target_os = "macos"), allow(unused_imports))]
 pub use discovery::call_developer;
 use discovery::*;
-pub use discovery::{call_control, running_pid};
+pub use discovery::{call_control, post_transcription, running_pid};
 use http::*;
 const API_VERSION: &str = "2";
 const LIVE_PROBE_TIMEOUT: Duration = Duration::from_millis(150);

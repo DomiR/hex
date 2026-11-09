@@ -7,6 +7,8 @@
 
 use std::io::Write;
 mod human;
+mod transcribe;
+pub use transcribe::TranscribeArgs;
 
 use clap::{Args, Subcommand};
 
@@ -101,6 +103,11 @@ pub enum ControlCli {
         #[command(flatten)]
         output: Output,
     },
+    /// Transcribe a WAV file with an installed model and print the text.
+    ///
+    /// Uses the running Hex's model; on Linux and Windows with no Hex
+    /// running it loads the model here. Exits 4 when there is no speech.
+    Transcribe(TranscribeArgs),
     /// Read and change any persisted setting, shortcuts included.
     Settings {
         #[command(subcommand)]
@@ -289,14 +296,9 @@ pub enum ModelCommand {
         #[arg(long)]
         language: Option<String>,
     },
-    /// Transcribe a WAV file with an installed model here. Linux and Windows.
-    Transcribe {
-        wav: std::path::PathBuf,
-        #[arg(long)]
-        model: Option<String>,
-        #[arg(long)]
-        language: Option<String>,
-    },
+    /// Transcribe a WAV file with an installed model; the same as
+    /// `hex transcribe`.
+    Transcribe(TranscribeArgs),
     /// Copy a GGUF speech model into Hex after checking its header,
     /// and print its id. The original is left as it is.
     Import {
@@ -439,8 +441,10 @@ pub fn run(command: ControlCli) -> u8 {
         ControlCli::Screenshot { pick, output } => {
             send(ControlCommand::Screenshot { pick }, output)
         }
+        ControlCli::Transcribe(args) => transcribe::transcribe(args),
         ControlCli::Settings { command } => settings(command),
         ControlCli::Model { command } => match command {
+            ModelCommand::Transcribe(args) => transcribe::transcribe(args),
             ModelCommand::List { output } => send(ControlCommand::ModelList, output),
             ModelCommand::Use {
                 model,
@@ -691,7 +695,7 @@ fn selection(
         .map_err(|error| color_eyre::eyre::eyre!(error.message))
 }
 
-/// `hex model status|devices|check|transcribe`, run in this process.
+/// `hex model status|devices|check`, run in this process.
 #[cfg(not(target_os = "macos"))]
 fn offline_model(command: ModelCommand) -> u8 {
     use crate::transcription::models::{definition, is_installed, is_verified, model_path};
@@ -724,20 +728,6 @@ fn offline_model(command: ModelCommand) -> u8 {
                 &selection(model, language)?,
             )?;
             println!("ready\t{}", transcriber.device_label());
-            Ok(())
-        }
-        ModelCommand::Transcribe {
-            wav,
-            model,
-            language,
-        } => {
-            println!(
-                "{}",
-                crate::transcription::local_transcriber::transcribe_wav_with_selection(
-                    &wav,
-                    &selection(model, language)?
-                )?
-            );
             Ok(())
         }
         _ => unreachable!("Hex carries out the other model commands"),

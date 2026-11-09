@@ -206,14 +206,6 @@ pub fn initialize_backends() {
     }
 }
 
-pub fn transcribe_wav_with_selection(
-    path: &Path,
-    selection: &TranscriptionSelection,
-) -> Result<String> {
-    let samples = read_wav_for_parakeet(path)?;
-    LocalTranscriber::load(selection)?.transcribe(&samples)
-}
-
 pub fn read_wav_for_parakeet(path: &Path) -> Result<Vec<f32>> {
     let mut reader = hound::WavReader::open(path)
         .wrap_err_with(|| format!("could not open {}", path.display()))?;
